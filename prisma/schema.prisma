@@ -1,0 +1,114 @@
+// This is your updated Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  BASIC
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  REVIEW
+  DONE
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+model Workspace {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  projects    Project[]
+  members     UserWorkspace[]
+}
+
+model User {
+  id             String           @id @default(uuid())
+  email          String           @unique
+  profilePicture String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  lastLogin      DateTime?
+  workspaces     UserWorkspace[]
+  tasks          Task[]
+}
+
+model UserWorkspace {
+  userId      String
+  workspaceId String
+  user        User       @relation(fields: [userId], references: [id])
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id])
+  userName    String
+  role        UserRole   @default(ADMIN)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  @@id([userId, workspaceId])
+}
+
+model Project {
+  id          String         @id @default(uuid())
+  name        String
+  workspaceId String
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id])
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      ProjectStatus
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  lists       List[]
+  tasks       Task[]
+}
+
+model List {
+  id          String       @id @default(uuid())
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id])
+  name        String
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  tasks       Task[]
+}
+
+model Task {
+  id           String       @id @default(uuid())
+  listId       String
+  list         List         @relation(fields: [listId], references: [id])
+  projectId    String
+  project      Project      @relation(fields: [projectId], references: [id])
+  title        String
+  description  String?
+  assignedTo   String?
+  assignedUser User?        @relation(fields: [assignedTo], references: [id])
+  dueDate      DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  status       TaskStatus?
+  priority     TaskPriority?
+}
