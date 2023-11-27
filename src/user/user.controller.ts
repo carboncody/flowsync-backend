@@ -6,14 +6,26 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
+  Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
+import { Public } from 'src/public/public.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Public()
+  @Get('/login')
+  async login(
+    @Query('code') code: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.userService.login(code, res);
+  }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
