@@ -1,4 +1,11 @@
-import { PrismaClient, TaskStatus, UserRole } from '@prisma/client';
+import {
+  PrismaClient,
+  ProjectStatus,
+  TaskPriority,
+  TaskStatus,
+  UserRole,
+  UserStatus,
+} from '@prisma/client';
 import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
@@ -7,14 +14,16 @@ async function main() {
   const numOfUsers = 10;
   const numOfWorkspaces = 5;
   const numOfProjectsPerWorkspace = 3;
-  const numOfListsPerProject = 3;
   const numOfTasksPerList = 5;
 
   const users = [];
   const generatedEmails = new Set();
 
   for (let i = 0; i < numOfUsers; i++) {
-    let email = i === 0 && process.env.SEED_EMAIL ? process.env.SEED_EMAIL : faker.internet.email();
+    let email =
+      i === 0 && process.env.SEED_EMAIL
+        ? process.env.SEED_EMAIL
+        : faker.internet.email();
 
     while (generatedEmails.has(email)) {
       email = faker.internet.email();
@@ -24,6 +33,7 @@ async function main() {
       data: {
         email: email,
         profilePicture: faker.image.avatar(),
+        status: UserStatus.COMPLETE,
       },
     });
     users.push(user);
@@ -55,42 +65,41 @@ async function main() {
           description: faker.commerce.productDescription(),
           workspaceId: workspace.id,
           status: faker.helpers.arrayElement([
-            'PLANNING',
-            'ACTIVE',
-            'ON_HOLD',
-            'COMPLETED',
-            'CANCELLED',
+            ProjectStatus.ACTIVE,
+            ProjectStatus.COMPLETED,
+            ProjectStatus.CANCELLED,
+            ProjectStatus.ON_HOLD,
+            ProjectStatus.PLANNING,
           ]),
         },
       });
 
-
-        for (let l = 0; l < numOfTasksPerList; l++) {
-          await prisma.task.create({
-            data: {
-              title: faker.lorem.sentence(),
-              description: faker.lorem.paragraph(),
-              workspaceId: workspace.id,
-              projectId: project.id,
-              status: faker.helpers.arrayElement([
-                'TODO',
-                'IN_PROGRESS',
-                'BLOCKED',
-                'REVIEW',
-                'DONE',
-              ]),
-              dueDate: faker.date.future(),
-              assignedTo: faker.helpers.arrayElement(users).id,
-              priority: faker.helpers.arrayElement([
-                'LOW',
-                'MEDIUM',
-                'HIGH',
-                'URGENT',
-              ]),
-            },
-          });
-        }
+      for (let l = 0; l < numOfTasksPerList; l++) {
+        await prisma.task.create({
+          data: {
+            title: faker.lorem.sentence(),
+            description: faker.lorem.paragraph(),
+            workspaceId: workspace.id,
+            projectId: project.id,
+            status: faker.helpers.arrayElement([
+              TaskStatus.TODO,
+              TaskStatus.IN_PROGRESS,
+              TaskStatus.DONE,
+              TaskStatus.CANCELLED,
+              TaskStatus.REVIEW,
+            ]),
+            dueDate: faker.date.future(),
+            assignedTo: faker.helpers.arrayElement(users).id,
+            priority: faker.helpers.arrayElement([
+              TaskPriority.LOW,
+              TaskPriority.MEDIUM,
+              TaskPriority.HIGH,
+              TaskPriority.URGENT,
+            ]),
+          },
+        });
       }
+    }
   }
 
   console.log('Seed data created successfully.');

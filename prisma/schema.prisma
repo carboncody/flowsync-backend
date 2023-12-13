@@ -33,7 +33,6 @@ enum TaskStatus {
   CANCELLED
   DUPLICATE
   BACKLOG
-  BLOCKED
 }
 
 enum ProjectStatus {
@@ -45,67 +44,83 @@ enum ProjectStatus {
 }
 
 model Workspace {
-  id          String         @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
   description String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   projects    Project[]
   tasks       Task[]
   members     UserWorkspace[]
 }
 
 model User {
-  id             String           @id @default(uuid())
-  email          String           @unique
+  id             String          @id @default(uuid())
+  email          String          @unique
   profilePicture String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   lastLogin      DateTime?
-  status         UserStatus       @default(INCOMPLETE)
+  status         UserStatus      @default(INCOMPLETE)
   workspaces     UserWorkspace[]
-  assignedTasks  Task[]           @relation("UserTasks")
+  assignedTasks  Task[]          @relation("UserTasks")
+  Comment        Comment[]
 }
 
 model UserWorkspace {
   userId      String
   workspaceId String
-  user        User       @relation(fields: [userId], references: [id])
-  workspace   Workspace  @relation(fields: [workspaceId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
   userName    String
-  role        UserRole   @default(ADMIN)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  role        UserRole  @default(ADMIN)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@id([userId, workspaceId])
 }
 
 model Project {
-  id          String         @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
   workspaceId String
-  workspace   Workspace      @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id])
   description String?
   startDate   DateTime?
   endDate     DateTime?
   status      ProjectStatus
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   tasks       Task[]
 }
 
 model Task {
-  id           String       @id @default(uuid())
+  id           String        @id @default(uuid())
   workspaceId  String
-  workspace    Workspace    @relation(fields: [workspaceId], references: [id])
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
   projectId    String?
-  project      Project?     @relation(fields: [projectId], references: [id])
+  project      Project?      @relation(fields: [projectId], references: [id])
   title        String
   description  String?
   assignedTo   String?
-  assignedUser User?        @relation(fields: [assignedTo], references: [id], name: "UserTasks")
+  assignedUser User?         @relation(fields: [assignedTo], references: [id], name: "UserTasks")
   dueDate      DateTime?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   status       TaskStatus?
   priority     TaskPriority?
+  Comment      Comment[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  createdBy String?
+  user      User?    @relation(fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
 }
