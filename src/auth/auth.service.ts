@@ -6,9 +6,9 @@ import { PrismaService } from 'src/prisma.service';
 import { UserEntity } from 'src/user/entities/user.entity';
 import { Environment } from 'src/env/env.factory';
 import { ContentType } from 'lib/constants';
-import { verify } from 'jsonwebtoken';
 import type { Response } from 'express';
 import { TaskStatus, UserRole, UserStatus } from '@prisma/client';
+import { verify } from 'jsonwebtoken';
 
 interface TokenResponse {
   access_token: string;
@@ -39,7 +39,7 @@ export class AuthService {
             client_id: this.env.auth0.clientId,
             client_secret: this.env.auth0.clientSecret,
             code,
-            redirect_uri: `${backendUrl}/user/login`,
+            redirect_uri: `${backendUrl}/auth/login`,
           },
           {
             headers: {
@@ -81,42 +81,6 @@ export class AuthService {
       });
     }
   }
-  
-    private async registerUserLogin({ email }: { email: string }) {
-      return this.prismaService.user.upsert({
-        where: {
-          email,
-        },
-        create: {
-          email,
-          status: UserStatus.INCOMPLETE,
-          lastLogin: new Date(),
-          workspaces: {
-            create: {
-              name: 'My Workspace',
-              description: 'Personal workspace for ' + email,
-              tasks: {
-                create: [
-                  { title: 'Task 1', status: TaskStatus.TODO },
-                  { title: 'Task 2', status: TaskStatus.IN_PROGRESS },
-                  { title: 'Task 3', status: TaskStatus.REVIEW },
-                  { title: 'Task 4', status: TaskStatus.DONE },
-                ],
-              },
-            },
-          },
-        },
-        update: {
-          lastLogin: new Date(),
-          status: UserStatus.COMPLETE,
-        },
-        include: {
-          workspaces: true,
-        },
-      });
-    }
-  
-  
 
   private validateToken(token: string) {
     const userInfo = verify(token, this.env.auth0.publicCertificate);
@@ -136,5 +100,62 @@ export class AuthService {
     }
 
     return result.data;
+  }
+
+  private async registerUserLogin({ email }: { email: string }) {
+    // Upsert the user
+    let user = await this.prismaService.user.upsert({
+      where: { email },
+      create: {
+        email,
+        status: UserStatus.INCOMPLETE,
+        lastLogin: new Date(),
+      },
+      update: {
+        lastLogin: new Date(),
+        status: UserStatus.COMPLETE,
+      },
+      include: { workspaces: true },
+    });
+
+    const userWorkspaces = await this.prismaService.userWorkspace.findMany({
+      where: { userId: user.id },
+    });
+
+    if (userWorkspaces.length === 0) {
+      const workspace = await this.prismaService.workspace.create({
+        data: {
+          name: 'My Workspace',
+          description: 'Personal workspace for ' + email,
+          tasks: {
+            create: [
+              { title: 'Task 1', status: TaskStatus.TODO },
+              { title: 'Task 2', status: TaskStatus.IN_PROGRESS },
+              { title: 'Task 3', status: TaskStatus.REVIEW },
+              { title: 'Task 4', status: TaskStatus.DONE },
+            ],
+          },
+        },
+      });
+
+      await this.prismaService.userWorkspace.create({
+        data: {
+          userId: user.id,
+          workspaceId: workspace.id,
+          userName: 'SomeUserName',
+          role: UserRole.ADMIN,
+        },
+      });
+    }
+    const updatedUser = await this.prismaService.user.findUnique({
+      where: { email },
+      include: { workspaces: true },
+    });
+
+    if (!updatedUser) {
+      throw new Error('User not found after upsert');
+    }
+
+    return updatedUser;
   }
 }

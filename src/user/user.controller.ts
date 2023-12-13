@@ -6,40 +6,37 @@ import {
   Patch,
   Param,
   Delete,
-  Query,
-  Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { Public } from 'src/public/public.decorator';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { EnrichedUser, EnrichedUserType } from './enriched.user.decorator';
+import { User as PrismaUser } from '@prisma/client';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Public()
-  @Get('/login')
-  async login(
-    @Query('code') code: string,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    return this.userService.login(code, res);
-  }
-
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  create() {
+    return this.userService.create();
   }
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
+  @Get('me')
+  findMe(@EnrichedUser user: EnrichedUserType) {
+    return this.userService.findMe(user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  findAllInWorkspace(@Param('id') id: string) {
+    return this.userService.findAllInWorkspace(id);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string, @EnrichedUser user: EnrichedUserType) {
+    return this.userService.findOne(
+      id,
+      user.workspaces.map((w) => w.workspaceId),
+    );
   }
 
   @Patch(':id')
