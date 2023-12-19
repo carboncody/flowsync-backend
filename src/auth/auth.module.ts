@@ -1,14 +1,14 @@
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthGuard } from './auth.guard';
-import { AuthController } from './auth.controller';
-import { ConfigService } from '@nestjs/config';
 import { ENVIRONMENT_KEY } from 'src/env/env.decorator';
 import { createEnvironment } from 'src/env/env.factory';
 import { PrismaService } from 'src/prisma.service';
+import { AuthController } from './auth.controller';
+import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
-import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [JwtModule, HttpModule],

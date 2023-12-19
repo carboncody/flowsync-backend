@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import {
   PrismaClient,
   ProjectStatus,
@@ -6,7 +7,6 @@ import {
   UserRole,
   UserStatus,
 } from '@prisma/client';
-import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
 
@@ -14,7 +14,8 @@ async function main() {
   const numOfUsers = 10;
   const numOfWorkspaces = 5;
   const numOfProjectsPerWorkspace = 3;
-  const numOfTasksPerList = 5;
+  const numOfTasksPerTeamSpace = 5;
+  const teamSpaceNames = ['Engineering', 'Design', 'Marketing'];
 
   const users = [];
   const generatedEmails = new Set();
@@ -29,6 +30,7 @@ async function main() {
       email = faker.internet.email();
     }
     generatedEmails.add(email);
+
     const user = await prisma.user.create({
       data: {
         email: email,
@@ -40,17 +42,19 @@ async function main() {
   }
 
   for (let i = 0; i < numOfWorkspaces; i++) {
+    const companyName = faker.company.name();
     const workspace = await prisma.workspace.create({
       data: {
-        name: faker.company.name(),
+        name: companyName,
         description: faker.company.catchPhrase(),
+        urlSlug: faker.helpers.slugify(companyName),
       },
     });
 
     for (const user of users) {
       await prisma.userWorkspace.create({
         data: {
-          userName: faker.person.firstName() + ' ' + faker.person.lastName(),
+          userName: faker.person.fullName(),
           workspaceId: workspace.id,
           userId: user.id,
           role: users.indexOf(user) === 0 ? UserRole.ADMIN : UserRole.BASIC,
@@ -59,43 +63,47 @@ async function main() {
     }
 
     for (let j = 0; j < numOfProjectsPerWorkspace; j++) {
-      const project = await prisma.project.create({
+      await prisma.project.create({
         data: {
           name: faker.commerce.productName(),
           description: faker.commerce.productDescription(),
           workspaceId: workspace.id,
-          status: faker.helpers.arrayElement([
-            ProjectStatus.ACTIVE,
-            ProjectStatus.COMPLETED,
-            ProjectStatus.CANCELLED,
-            ProjectStatus.ON_HOLD,
-            ProjectStatus.PLANNING,
-          ]),
+          status: faker.helpers.arrayElement(Object.values(ProjectStatus)),
+        },
+      });
+    }
+
+    const seedUser =
+      users.find((u) => u.email === process.env.SEED_EMAIL) || users[0];
+
+    for (const name of teamSpaceNames) {
+      const teamSpace = await prisma.teamSpace.create({
+        data: {
+          name: name,
+          acronym: name.substring(0, 3).toUpperCase(),
+          workspaceId: workspace.id,
+          description: faker.company.buzzNoun(),
         },
       });
 
-      for (let l = 0; l < numOfTasksPerList; l++) {
+      await prisma.userTeamSpace.create({
+        data: {
+          userId: seedUser.id,
+          teamSpaceId: teamSpace.id,
+          role: UserRole.ADMIN,
+        },
+      });
+
+      for (let k = 0; k < numOfTasksPerTeamSpace; k++) {
         await prisma.task.create({
           data: {
             title: faker.lorem.sentence(),
             description: faker.lorem.paragraph(),
-            workspaceId: workspace.id,
-            projectId: project.id,
-            status: faker.helpers.arrayElement([
-              TaskStatus.TODO,
-              TaskStatus.IN_PROGRESS,
-              TaskStatus.DONE,
-              TaskStatus.CANCELLED,
-              TaskStatus.REVIEW,
-            ]),
+            status: faker.helpers.arrayElement(Object.values(TaskStatus)),
+            priority: faker.helpers.arrayElement(Object.values(TaskPriority)),
             dueDate: faker.date.future(),
             assignedTo: faker.helpers.arrayElement(users).id,
-            priority: faker.helpers.arrayElement([
-              TaskPriority.LOW,
-              TaskPriority.MEDIUM,
-              TaskPriority.HIGH,
-              TaskPriority.URGENT,
-            ]),
+            teamSpaceId: teamSpace.id,
           },
         });
       }

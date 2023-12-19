@@ -1,10 +1,10 @@
-import { UserPipe } from './user.pipe';
+import { User as PrismaUser, Workspace } from '@prisma/client';
 import { User as UserDecorator } from './user.decorator';
-import { User as PrismaUser } from '@prisma/client';
+import { UserPipe } from './user.pipe';
 
 export type EnrichedUserType = PrismaUser & {
   workspaces: {
-    workspaceId: string;
+    workspace: Workspace;
   }[];
 };
 

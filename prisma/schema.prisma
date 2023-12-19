@@ -19,6 +19,7 @@ enum UserRole {
 }
 
 enum TaskPriority {
+  NONE
   LOW
   MEDIUM
   HIGH
@@ -43,84 +44,117 @@ enum ProjectStatus {
   CANCELLED
 }
 
+enum ActivityType {
+  TASK_UPDATE
+  USER_COMMENT
+}
+
 model Workspace {
-  id          String          @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
+  urlSlug     String        @unique
   description String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   projects    Project[]
-  tasks       Task[]
+  teamSpaces  TeamSpace[]
   members     UserWorkspace[]
 }
 
 model User {
   id             String          @id @default(uuid())
   email          String          @unique
+  activity       Activity[]
   profilePicture String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   lastLogin      DateTime?
   status         UserStatus      @default(INCOMPLETE)
+  teamspaces     UserTeamSpace[]
   workspaces     UserWorkspace[]
   assignedTasks  Task[]          @relation("UserTasks")
-  Comment        Comment[]
 }
 
 model UserWorkspace {
   userId      String
   workspaceId String
-  user        User      @relation(fields: [userId], references: [id])
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  user        User              @relation(fields: [userId], references: [id])
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id])
   userName    String
-  role        UserRole  @default(ADMIN)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  role        UserRole          @default(ADMIN)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   @@id([userId, workspaceId])
 }
 
 model Project {
-  id          String        @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
-  workspaceId String
-  workspace   Workspace     @relation(fields: [workspaceId], references: [id])
   description String?
   startDate   DateTime?
   endDate     DateTime?
   status      ProjectStatus
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  workspaceId String
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id])
   tasks       Task[]
 }
 
 model Task {
   id           String        @id @default(uuid())
-  workspaceId  String
-  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
-  projectId    String?
-  project      Project?      @relation(fields: [projectId], references: [id])
   title        String
   description  String?
+  status       TaskStatus?
+  priority     TaskPriority?
   assignedTo   String?
   assignedUser User?         @relation(fields: [assignedTo], references: [id], name: "UserTasks")
   dueDate      DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  status       TaskStatus?
-  priority     TaskPriority?
-  Comment      Comment[]
+  teamSpaceId  String
+  teamSpace    TeamSpace     @relation(fields: [teamSpaceId], references: [id])
+  projectId    String?
+  Activity      Activity[]
+  project      Project?      @relation(fields: [projectId], references: [id])
 }
 
-model Comment {
-  id        String   @id @default(uuid())
-  content   String
-  taskId    String
-  task      Task     @relation(fields: [taskId], references: [id])
-  createdBy String?
-  user      User?    @relation(fields: [createdBy], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model TeamSpace {
+  id          String           @id @default(uuid())
+  name        String
+  acronym     String
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  workspaceId String
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id])
+  tasks       Task[]
+  members     UserTeamSpace[]
+}
+
+model UserTeamSpace {
+  userId      String
+  teamSpaceId String
+  role        UserRole
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id])
+  teamSpace   TeamSpace       @relation(fields: [teamSpaceId], references: [id])
+
+  @@id([userId, teamSpaceId])
+}
+
+model Activity {
+  id          String       @id @default(uuid())
+  content     String
+  type        ActivityType
+  taskId      String
+  task        Task         @relation(fields: [taskId], references: [id])
+  createdBy   String?
+  user        User?        @relation(fields: [createdBy], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([taskId])
 }

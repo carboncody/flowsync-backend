@@ -1,15 +1,15 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
-import { Public } from 'src/public/public.decorator';
-import type { Response } from 'express';
-import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { Env } from 'src/env/env.decorator';
-import { PrismaService } from 'src/prisma.service';
-import { UserEntity } from 'src/user/entities/user.entity';
-import { Environment } from 'src/env/env.factory';
-import { ContentType } from 'lib/constants';
-import { TaskStatus, UserRole, UserStatus } from '@prisma/client';
+import { Controller, Get, Query, Res } from '@nestjs/common';
+import { UserStatus } from '@prisma/client';
+import type { Response } from 'express';
 import { verify } from 'jsonwebtoken';
+import { ContentType } from 'lib/constants';
+import { firstValueFrom } from 'rxjs';
+import { Env } from 'src/env/env.decorator';
+import { Environment } from 'src/env/env.factory';
+import { PrismaService } from 'src/prisma.service';
+import { Public } from 'src/public/public.decorator';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 interface TokenResponse {
   access_token: string;
@@ -128,31 +128,31 @@ export class AuthController {
       where: { userId: user.id },
     });
 
-    if (userWorkspaces.length === 0) {
-      const workspace = await this.prismaService.workspace.create({
-        data: {
-          name: 'My Workspace',
-          description: 'Personal workspace for ' + email,
-          tasks: {
-            create: [
-              { title: 'Task 1', status: TaskStatus.TODO },
-              { title: 'Task 2', status: TaskStatus.IN_PROGRESS },
-              { title: 'Task 3', status: TaskStatus.REVIEW },
-              { title: 'Task 4', status: TaskStatus.DONE },
-            ],
-          },
-        },
-      });
+    // if (userWorkspaces.length === 0) {
+    //   const workspace = await this.prismaService.workspace.create({
+    //     data: {
+    //       name: 'My Workspace',
+    //       description: 'Personal workspace for ' + email,
+    //       tasks: {
+    //         create: [
+    //           { title: 'Task 1', status: TaskStatus.TODO },
+    //           { title: 'Task 2', status: TaskStatus.IN_PROGRESS },
+    //           { title: 'Task 3', status: TaskStatus.REVIEW },
+    //           { title: 'Task 4', status: TaskStatus.DONE },
+    //         ],
+    //       },
+    //     },
+    //   });
 
-      await this.prismaService.userWorkspace.create({
-        data: {
-          userId: user.id,
-          workspaceId: workspace.id,
-          userName: 'SomeUserName',
-          role: UserRole.ADMIN,
-        },
-      });
-    }
+    //   await this.prismaService.userWorkspace.create({
+    //     data: {
+    //       userId: user.id,
+    //       workspaceId: workspace.id,
+    //       userName: 'SomeUserName',
+    //       role: UserRole.ADMIN,
+    //     },
+    //   });
+    // }
 
     const updatedUser = await this.prismaService.user.findUnique({
       where: { email },

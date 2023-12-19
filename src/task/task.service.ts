@@ -1,11 +1,50 @@
 import { Injectable } from '@nestjs/common';
+import { TaskStatus } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
 export class TaskService {
-  create(createTaskDto: CreateTaskDto) {
-    return 'This action adds a new task';
+  constructor(private prisma: PrismaService) {}
+
+  async create(
+    userId: string,
+    createTask: CreateTaskDto,
+    workspaceIds: string[],
+  ) {
+    const transactionResults = await this.prisma.$transaction([
+      this.prisma.user.findFirstOrThrow({
+        where: {
+          id: userId,
+          workspaces: {
+            some: {
+              workspaceId: {
+                in: workspaceIds,
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.task.create({
+        data: {
+          teamSpaceId: createTask.teamspaceId,
+          title: createTask.title,
+          description: createTask.description,
+          status: createTask.status,
+          projectId: createTask.projectId && createTask.projectId,
+          assignedTo: createTask.assignedTo && createTask.assignedTo,
+          dueDate: createTask.dueDate && createTask.dueDate,
+          priority: createTask.priority && createTask.priority,
+        },
+      }),
+    ]);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (transactionResults.length !== 2) {
+      throw new Error('findEmployeeById - transaction result length incorrect');
+    }
+
+    return transactionResults[1];
   }
 
   findAll() {
@@ -20,7 +59,33 @@ export class TaskService {
     return `This action updates a #${id} task`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} task`;
+  async updateStatus(userId: string, id: string, status: TaskStatus) {
+    await this.prisma.$transaction(async (prisma) => {
+      await prisma.user.findFirstOrThrow({
+        where: {
+          id: userId,
+          teamspaces: {
+            some: {
+              teamSpace: {
+                tasks: {
+                  some: {
+                    id,
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return await prisma.task.update({
+        where: {
+          id,
+        },
+        data: {
+          status,
+        },
+      });
+    });
   }
 }

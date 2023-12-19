@@ -1,15 +1,19 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
-import { WorkspaceService } from './workspace.service';
+import {
+  EnrichedUser,
+  EnrichedUserType,
+} from 'src/user/enriched.user.decorator';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
+import { WorkspaceService } from './workspace.service';
 
 @Controller('workspace')
 export class WorkspaceController {
@@ -25,9 +29,12 @@ export class WorkspaceController {
     return this.workspaceService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.workspaceService.findOne(+id);
+  @Get(':url')
+  findOne(@Param('url') url: string, @EnrichedUser user: EnrichedUserType) {
+    return this.workspaceService.findOne(
+      url,
+      user.workspaces.map((w) => w.workspace.urlSlug),
+    );
   }
 
   @Patch(':id')

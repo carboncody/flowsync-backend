@@ -1,7 +1,7 @@
-import { UserEntity } from './entities/user.entity';
-import { UserService } from './user.service';
 import { Injectable, PipeTransform } from '@nestjs/common';
 import { User as PrismaUser } from '@prisma/client';
+import { UserEntity } from './entities/user.entity';
+import { UserService } from './user.service';
 
 @Injectable()
 export class UserPipe

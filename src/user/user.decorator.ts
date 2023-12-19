@@ -1,6 +1,6 @@
-import { Request } from 'express';
-import { User as PrismaUser } from '@prisma/client';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { User as PrismaUser } from '@prisma/client';
+import { Request } from 'express';
 
 interface RequestWithUser extends Request {
   user: PrismaUser;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { PrismaService } from 'src/prisma.service';
 import { User as PrismaUser } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -10,7 +10,11 @@ export class UserService {
     return this.prisma.user.findUniqueOrThrow({
       where: { email },
       include: {
-        workspaces: true,
+        workspaces: {
+          include: {
+            workspace: {},
+          },
+        },
       },
     });
   }

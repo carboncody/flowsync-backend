@@ -1,4 +1,3 @@
-import { Request } from 'express';
 import {
   CanActivate,
   ExecutionContext,
@@ -8,10 +7,11 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
 import { Env } from 'src/env/env.decorator';
 import { Environment } from 'src/env/env.factory';
-import { UserEntity } from 'src/user/entities/user.entity';
 import { IS_PUBLIC_KEY } from 'src/public/public.decorator';
+import { UserEntity } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

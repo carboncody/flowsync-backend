@@ -1,16 +1,15 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
-import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { EnrichedUser, EnrichedUserType } from './enriched.user.decorator';
-import { User as PrismaUser } from '@prisma/client';
+import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
@@ -35,7 +34,7 @@ export class UserController {
   findOne(@Param('id') id: string, @EnrichedUser user: EnrichedUserType) {
     return this.userService.findOne(
       id,
-      user.workspaces.map((w) => w.workspaceId),
+      user.workspaces.map((w) => w.workspace.id),
     );
   }
 
