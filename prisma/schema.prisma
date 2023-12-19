@@ -50,14 +50,14 @@ enum ActivityType {
 }
 
 model Workspace {
-  id          String         @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
-  urlSlug     String        @unique
+  urlSlug     String          @unique
   description String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   projects    Project[]
-  teamSpaces  TeamSpace[]
+  teamspaces  teamspace[]
   members     UserWorkspace[]
 }
 
@@ -70,7 +70,7 @@ model User {
   updatedAt      DateTime        @updatedAt
   lastLogin      DateTime?
   status         UserStatus      @default(INCOMPLETE)
-  teamspaces     UserTeamSpace[]
+  teamspaces     Userteamspace[]
   workspaces     UserWorkspace[]
   assignedTasks  Task[]          @relation("UserTasks")
 }
@@ -78,27 +78,27 @@ model User {
 model UserWorkspace {
   userId      String
   workspaceId String
-  user        User              @relation(fields: [userId], references: [id])
-  workspace   Workspace         @relation(fields: [workspaceId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
   userName    String
-  role        UserRole          @default(ADMIN)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  role        UserRole  @default(ADMIN)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@id([userId, workspaceId])
 }
 
 model Project {
-  id          String         @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
   description String?
   startDate   DateTime?
   endDate     DateTime?
   status      ProjectStatus
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   workspaceId String
-  workspace   Workspace      @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id])
   tasks       Task[]
 }
 
@@ -113,48 +113,48 @@ model Task {
   dueDate      DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  teamSpaceId  String
-  teamSpace    TeamSpace     @relation(fields: [teamSpaceId], references: [id])
+  teamspaceId  String
+  teamspace    teamspace     @relation(fields: [teamspaceId], references: [id])
   projectId    String?
-  Activity      Activity[]
+  Activity     Activity[]
   project      Project?      @relation(fields: [projectId], references: [id])
 }
 
-model TeamSpace {
-  id          String           @id @default(uuid())
+model teamspace {
+  id          String          @id @default(uuid())
   name        String
   acronym     String
   description String?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  workspaceId String
-  workspace   Workspace        @relation(fields: [workspaceId], references: [id])
-  tasks       Task[]
-  members     UserTeamSpace[]
-}
-
-model UserTeamSpace {
-  userId      String
-  teamSpaceId String
-  role        UserRole
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
-  user        User            @relation(fields: [userId], references: [id])
-  teamSpace   TeamSpace       @relation(fields: [teamSpaceId], references: [id])
+  workspaceId String
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id])
+  tasks       Task[]
+  members     Userteamspace[]
+}
 
-  @@id([userId, teamSpaceId])
+model Userteamspace {
+  userId      String
+  teamspaceId String
+  role        UserRole
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
+  teamspace   teamspace @relation(fields: [teamspaceId], references: [id])
+
+  @@id([userId, teamspaceId])
 }
 
 model Activity {
-  id          String       @id @default(uuid())
-  content     String
-  type        ActivityType
-  taskId      String
-  task        Task         @relation(fields: [taskId], references: [id])
-  createdBy   String?
-  user        User?        @relation(fields: [createdBy], references: [id])
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id        String       @id @default(uuid())
+  content   String
+  type      ActivityType
+  taskId    String
+  task      Task         @relation(fields: [taskId], references: [id])
+  createdBy String?
+  user      User?        @relation(fields: [createdBy], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   @@index([taskId])
 }

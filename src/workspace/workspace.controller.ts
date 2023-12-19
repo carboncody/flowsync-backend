@@ -25,28 +25,26 @@ export class WorkspaceController {
   }
 
   @Get()
-  findAll() {
-    return this.workspaceService.findAll();
+  findAllWorkspacesForUser(@EnrichedUser user: EnrichedUserType) {
+    return this.workspaceService.findAllWorkspacesForUser(user.id);
   }
 
-  @Get(':url')
-  findOne(@Param('url') url: string, @EnrichedUser user: EnrichedUserType) {
-    return this.workspaceService.findOne(
-      url,
-      user.workspaces.map((w) => w.workspace.urlSlug),
-    );
+  @Get(':id')
+  findOne(@Param('id') id: string, @EnrichedUser user: EnrichedUserType) {
+    return this.workspaceService.findOne(id, user.id);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
+    @EnrichedUser user: EnrichedUserType,
     @Body() updateWorkspaceDto: UpdateWorkspaceDto,
   ) {
-    return this.workspaceService.update(+id, updateWorkspaceDto);
+    return this.workspaceService.update(id, user.id, updateWorkspaceDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.workspaceService.remove(+id);
+    return this.workspaceService.remove(id);
   }
 }

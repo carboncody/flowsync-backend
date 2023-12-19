@@ -8,7 +8,6 @@ import { createEnvironment } from './env/env.factory';
 import { PrismaService } from './prisma.service';
 import { ProjectModule } from './project/project.module';
 import { TaskModule } from './task/task.module';
-import { TeamspaceController } from './teamspace/teamspace.controller';
 import { TeamspaceModule } from './teamspace/teamspace.module';
 import { UserModule } from './user/user.module';
 import { WorkspaceModule } from './workspace/workspace.module';
@@ -25,7 +24,7 @@ import { WorkspaceModule } from './workspace/workspace.module';
     AuthModule,
     TeamspaceModule,
   ],
-  controllers: [AppController, TeamspaceController],
+  controllers: [AppController],
   providers: [
     AppService,
     PrismaService,

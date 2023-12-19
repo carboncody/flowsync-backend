@@ -28,7 +28,7 @@ export class TaskService {
       }),
       this.prisma.task.create({
         data: {
-          teamSpaceId: createTask.teamspaceId,
+          teamspaceId: createTask.teamspaceId,
           title: createTask.title,
           description: createTask.description,
           status: createTask.status,
@@ -66,7 +66,7 @@ export class TaskService {
           id: userId,
           teamspaces: {
             some: {
-              teamSpace: {
+              teamspace: {
                 tasks: {
                   some: {
                     id,

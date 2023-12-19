@@ -1,44 +1,97 @@
 import {
-  ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 
 @Injectable()
 export class WorkspaceService {
-  constructor(private prisma: PrismaService) {}
-  create(createWorkspaceDto: CreateWorkspaceDto) {
-    return 'This action adds a new workspace';
+  constructor(private readonly prisma: PrismaService) {}
+  async create(createWorkspaceDto: CreateWorkspaceDto) {
+    return await this.prisma.workspace.create({
+      data: {
+        name: createWorkspaceDto.name,
+        urlSlug: createWorkspaceDto.urlSlug,
+        description: createWorkspaceDto.description,
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all workspace`;
+  async findAllWorkspacesForUser(userId: string) {
+    return await this.prisma.userWorkspace
+      .findMany({
+        where: {
+          userId: userId,
+        },
+        include: {
+          workspace: true,
+        },
+      })
+      .then((userWorkspaces) => userWorkspaces.map((uw) => uw.workspace));
   }
 
-  async findOne(urlSlug: string, userWorkspacesUrls: string[]) {
+  async findOne(id: string, userId: string) {
     const workspace = await this.prisma.workspace.findUnique({
       where: {
-        urlSlug,
+        id: id,
       },
-      include: { members: true, teamSpaces: true, projects: true },
+      include: {
+        members: {
+          where: {
+            userId: userId,
+          },
+        },
+      },
     });
+
     if (!workspace) {
-      throw new NotFoundException(`Workspace ${urlSlug} not found`);
+      throw new NotFoundException(`Workspace with ID ${id} not found`);
     }
-    if (!userWorkspacesUrls.includes(workspace.urlSlug)) {
-      throw new ForbiddenException(`You don't have access to this workspace`);
+
+    if (workspace.members.length === 0) {
+      throw new NotFoundException(
+        `User with ID ${userId} is not a member of Workspace with ID ${id}`,
+      );
     }
+
     return workspace;
   }
 
-  update(id: number, updateWorkspaceDto: UpdateWorkspaceDto) {
-    return `This action updates a #${id} workspace`;
+  async update(
+    id: string,
+    userId: string,
+    updateWorkspaceDto: UpdateWorkspaceDto,
+  ) {
+    const userWorkspace = await this.prisma.userWorkspace.findFirst({
+      where: {
+        workspaceId: id,
+        userId: userId,
+      },
+    });
+
+    if (!userWorkspace) {
+      throw new NotFoundException(
+        `User with ID ${userId} is not a member of Workspace with ID ${id}`,
+      );
+    }
+
+    if (userWorkspace.role !== UserRole.ADMIN) {
+      throw new UnauthorizedException(
+        `User with ID ${userId} does not have permission to update Workspace with ID ${id}`,
+      );
+    }
+
+    return await this.prisma.workspace.update({
+      where: { id: id },
+      data: updateWorkspaceDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} workspace`;
+  remove(id: string) {
+    throw new Error('TODO : soft delete');
   }
 }
