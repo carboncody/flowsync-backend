@@ -1,62 +1,72 @@
 import {
-  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { TaskStatus } from '@prisma/client';
-import {
-  EnrichedUser,
-  EnrichedUserType,
-} from 'src/user/enriched.user.decorator';
+import { User } from '@prisma/client';
+import { EnrichedUser } from 'src/user/enriched.user.decorator';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
 
-@Controller('task')
+@Controller('tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
   @Post()
-  create(
-    @Body() createTaskDto: CreateTaskDto,
-    @EnrichedUser user: EnrichedUserType,
-  ) {
-    return this.taskService.create(
-      user.id,
-      createTaskDto,
-      user.workspaces.map((w) => w.workspace.id),
-    );
+  create(@EnrichedUser user: User, @Body() createTaskDto: CreateTaskDto) {
+    if (!user || !user.id) {
+      throw new UnauthorizedException();
+    }
+    return this.taskService.create(user.id, createTaskDto);
   }
 
-  @Get()
-  findAll() {
-    return this.taskService.findAll();
+  @Get('team-space/:teamspaceId')
+  findAllInTeamSpace(
+    @EnrichedUser user: User,
+    @Param('teamspaceId') teamspaceId: string,
+  ) {
+    if (!user || !user.id) {
+      throw new UnauthorizedException();
+    }
+    return this.taskService.findAllInTeamSpace(user.id, teamspaceId);
+  }
+
+  @Get('my-tasks')
+  findAllMyTasks(@EnrichedUser user: User) {
+    if (!user || !user.id) {
+      throw new UnauthorizedException();
+    }
+    return this.taskService.findAllMyTasks(user.id);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.taskService.findOne(+id);
+    return this.taskService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.taskService.update(+id, updateTaskDto);
+  update(
+    @EnrichedUser user: User,
+    @Param('id') id: string,
+    @Body() updateTaskDto: UpdateTaskDto,
+  ) {
+    if (!user || !user.id) {
+      throw new UnauthorizedException();
+    }
+    return this.taskService.update(user.id, id, updateTaskDto);
   }
 
-  @Patch(':id/:status')
-  updateStatus(
-    @Param('id') id: string,
-    @Param('status') status: string,
-    @EnrichedUser user: EnrichedUserType,
-  ) {
-    if (!(status in TaskStatus)) {
-      throw new BadRequestException('Invalid task status');
+  @Delete(':id')
+  remove(@EnrichedUser user: User, @Param('id') id: string) {
+    if (!user || !user.id) {
+      throw new UnauthorizedException();
     }
-
-    return this.taskService.updateStatus(user.id, id, status as TaskStatus);
+    return this.taskService.remove(user.id, id);
   }
 }

@@ -7,10 +7,8 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import {
-  EnrichedUser,
-  EnrichedUserType,
-} from 'src/user/enriched.user.decorator';
+import { User } from '@prisma/client';
+import { EnrichedUser } from 'src/user/enriched.user.decorator';
 import { CreateteamspaceDto } from './dto/create-teamspace.dto';
 import { UpdateteamspaceDto } from './dto/update-teamspace.dto';
 import { TeamspaceService } from './teamspace.service';
@@ -22,13 +20,26 @@ export class TeamspaceController {
   @Post(':workspaceId')
   create(
     @Param('workspaceId') workspaceId: string,
-    @EnrichedUser user: EnrichedUserType,
+    @EnrichedUser user: User,
     @Body() createteamspaceDto: CreateteamspaceDto,
   ) {
     return this.teamspaceService.create(
       workspaceId,
       user.id,
       createteamspaceDto,
+    );
+  }
+
+  @Post(':teamspaceId/users/:userId')
+  addUserToTeamSpace(
+    @Param('teamspaceId') teamspaceId: string,
+    @Param('userId') userId: string,
+    @EnrichedUser user: User,
+  ) {
+    return this.teamspaceService.addUserToTeamSpace(
+      userId,
+      teamspaceId,
+      user.id,
     );
   }
 
@@ -45,14 +56,14 @@ export class TeamspaceController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @EnrichedUser user: EnrichedUserType,
+    @EnrichedUser user: User,
     @Body() updateteamspaceDto: UpdateteamspaceDto,
   ) {
     return this.teamspaceService.update(id, user.id, updateteamspaceDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @EnrichedUser user: EnrichedUserType) {
+  remove(@Param('id') id: string, @EnrichedUser user: User) {
     return this.teamspaceService.remove(id, user.id);
   }
 }

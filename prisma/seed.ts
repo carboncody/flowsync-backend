@@ -86,7 +86,7 @@ async function main() {
         },
       });
 
-      await prisma.userteamspace.create({
+      await prisma.userTeamspace.create({
         data: {
           userId: seedUser.id,
           teamspaceId: teamspace.id,
