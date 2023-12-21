@@ -1,9 +1,9 @@
+import { presetTaskStatuses } from '../src/constants/presetTaskStatuses';
 import { faker } from '@faker-js/faker';
 import {
   PrismaClient,
   ProjectStatus,
   TaskPriority,
-  TaskStatus,
   UserRole,
   UserStatus,
 } from '@prisma/client';
@@ -14,7 +14,7 @@ async function main() {
   const numOfUsers = 10;
   const numOfWorkspaces = 5;
   const numOfProjectsPerWorkspace = 3;
-  const numOfTasksPerteamspace = 5;
+  const numOfTasksPerteamspace = 10;
   const teamspaceNames = ['Engineering', 'Design', 'Marketing'];
 
   const users = [];
@@ -47,7 +47,10 @@ async function main() {
       data: {
         name: companyName,
         description: faker.company.catchPhrase(),
-        urlSlug: faker.helpers.slugify(companyName),
+        urlSlug: faker.helpers
+          .slugify(companyName)
+          .toLowerCase()
+          .replace(/-+/g, '-'),
       },
     });
 
@@ -86,6 +89,20 @@ async function main() {
         },
       });
 
+      const taskStatusIds = [];
+
+      for (const status of presetTaskStatuses) {
+        const createdStatus = await prisma.taskStatus.create({
+          data: {
+            name: status.name,
+            index: status.index,
+            description: status.description,
+            teamspaceId: teamspace.id,
+          },
+        });
+        taskStatusIds.push(createdStatus.id);
+      }
+
       await prisma.userTeamspace.create({
         data: {
           userId: seedUser.id,
@@ -99,7 +116,7 @@ async function main() {
           data: {
             title: faker.lorem.sentence(),
             description: faker.lorem.paragraph(),
-            status: faker.helpers.arrayElement(Object.values(TaskStatus)),
+            statusId: faker.helpers.arrayElement(taskStatusIds),
             priority: faker.helpers.arrayElement(Object.values(TaskPriority)),
             dueDate: faker.date.future(),
             assignedTo: faker.helpers.arrayElement(users).id,

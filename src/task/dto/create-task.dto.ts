@@ -1,9 +1,9 @@
-import { TaskPriority, TaskStatus } from '@prisma/client';
+import { TaskPriority } from '@prisma/client';
 
 export class CreateTaskDto {
   title: string;
   description?: string;
-  status?: TaskStatus;
+  statusId?: string;
   priority?: TaskPriority;
   assignedTo?: string;
   dueDate?: Date;

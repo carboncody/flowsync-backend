@@ -37,14 +37,6 @@ export class TaskController {
     return this.taskService.findAllInTeamSpace(user.id, teamspaceId);
   }
 
-  @Get('my-tasks')
-  findAllMyTasks(@EnrichedUser user: User) {
-    if (!user || !user.id) {
-      throw new UnauthorizedException();
-    }
-    return this.taskService.findAllMyTasks(user.id);
-  }
-
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.taskService.findOne(id);

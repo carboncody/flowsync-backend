@@ -11,6 +11,7 @@ enum UserStatus {
   INVITED
   INCOMPLETE
   COMPLETE
+  DELETED
 }
 
 enum UserRole {
@@ -24,16 +25,6 @@ enum TaskPriority {
   MEDIUM
   HIGH
   URGENT
-}
-
-enum TaskStatus {
-  TODO
-  IN_PROGRESS
-  REVIEW
-  DONE
-  CANCELLED
-  DUPLICATE
-  BACKLOG
 }
 
 enum ProjectStatus {
@@ -103,34 +94,48 @@ model Project {
 }
 
 model Task {
-  id           String        @id @default(uuid())
+  id           String      @id @default(uuid())
   title        String
   description  String?
-  status       TaskStatus?
+  statusId     String?
+  status       TaskStatus? @relation(fields: [statusId], references: [id])
   priority     TaskPriority?
   assignedTo   String?
-  assignedUser User?         @relation(fields: [assignedTo], references: [id], name: "UserTasks")
+  assignedUser User?       @relation(fields: [assignedTo], references: [id], name: "UserTasks")
   dueDate      DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
   teamspaceId  String
-  teamspace    Teamspace     @relation(fields: [teamspaceId], references: [id])
+  teamspace    Teamspace   @relation(fields: [teamspaceId], references: [id])
   projectId    String?
-  Activity     Activity[]
-  project      Project?      @relation(fields: [projectId], references: [id])
+  activity     Activity[]
+  project      Project?    @relation(fields: [projectId], references: [id])
+}
+
+model TaskStatus {
+  id          String      @id @default(uuid())
+  index       String
+  name        String
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  teamspaceId String
+  teamspace   Teamspace   @relation(fields: [teamspaceId], references: [id])
+  tasks       Task[]
 }
 
 model Teamspace {
-  id          String          @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
   acronym     String
   description String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   workspaceId String
-  workspace   Workspace       @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id])
   tasks       Task[]
   members     UserTeamspace[]
+  taskStatuses TaskStatus[]
 }
 
 model UserTeamspace {

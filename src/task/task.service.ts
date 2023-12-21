@@ -32,12 +32,6 @@ export class TaskService {
     });
   }
 
-  async findAllMyTasks(userId: string) {
-    return this.prisma.task.findMany({
-      where: { assignedTo: userId },
-    });
-  }
-
   async findOne(id: string) {
     const task = await this.prisma.task.findUnique({ where: { id } });
     if (!task) {

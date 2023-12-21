@@ -1,3 +1,4 @@
+import { presetTaskStatuses } from '@constants/presetTaskStatuses';
 import {
   ForbiddenException,
   Injectable,
@@ -34,6 +35,11 @@ export class TeamspaceService {
       data: {
         ...createteamspaceDto,
         workspaceId: workspaceId,
+        taskStatuses: {
+          createMany: {
+            data: presetTaskStatuses,
+          },
+        },
       },
     });
   }

@@ -21,6 +21,30 @@ export class UserService {
     });
   }
 
+  findMe(id: string) {
+    return this.prisma.user.findUniqueOrThrow({
+      where: {
+        id,
+      },
+      include: {
+        assignedTasks: true,
+        workspaces: {
+          include: {
+            workspace: {
+              include: {
+                members: {
+                  include: {
+                    user: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async create(createUserDto: CreateUserDto): Promise<User> {
     return this.prisma.user.create({
       data: createUserDto,
